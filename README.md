@@ -83,18 +83,25 @@ near it.
 
 ## Demo
 
-[`docs/demo/folio-demo.mp4`](docs/demo/folio-demo.mp4) — 62 seconds, silent.
+[`docs/demo/folio-demo.mp4`](docs/demo/folio-demo.mp4) — 80 seconds, silent,
+1600×900.
 
-It is cut from a real session: index 68 documents, answer with the page, verify
-the quotation, catch a revision, refuse a fabricated quote. The full transcript
-is in [`docs/demo/transcript.md`](docs/demo/transcript.md), and the video's text
-is taken from it verbatim.
+Opening on a wall of the indexed pages, it shows the real Desktop app answering a
+real question (five tool calls, `EXACT` at p. 1, characters 97–215), the reader
+drawing the match from the PDF's own character box, a revised clause reported as
+a diff, and a fabricated quotation refused. The app frame is a capture of a real
+Hermes Desktop instance, not a mockup; the terminal text is taken verbatim from
+[`docs/demo/transcript.md`](docs/demo/transcript.md).
 
 ```
 you   › where does the platform spec cap retries?
-hermes › Retries are capped at three attempts per request … (p. 1)
-         Quote verified EXACT at p. 1 (chars 97-216).
+hermes › Retries are capped at five attempts per request … (p. 1)
+         Verified EXACT at p. 1 (chars 97–215).
 ```
+
+Before the revision that same question was answered with *three* attempts at
+characters 97–216, and `folio_changes` shows the difference — both answers are
+quoted from a real capture, in the transcript.
 
 ## Revisions
 
