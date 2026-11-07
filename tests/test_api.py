@@ -29,6 +29,11 @@ def client(tmp_path: Path, corpus: Path, monkeypatch):
     monkeypatch.setattr(folio, "_CACHED_AT", time.monotonic() + 10_000, raising=False)
     monkeypatch.setattr(folio, "_STORE", store, raising=False)
     monkeypatch.setattr(folio, "_INDEXER", indexer, raising=False)
+    # The endpoints resolve the plugin module and its store through helpers;
+    # pin both, so the test exercises the HTTP layer against this temp index
+    # instead of whatever the host profile has indexed.
+    monkeypatch.setattr(plugin_api, "_plugin", lambda: folio)
+    monkeypatch.setattr(plugin_api, "_store", lambda: store)
 
     app = fastapi.FastAPI()
     app.include_router(plugin_api.router, prefix="/api/plugins/folio")
