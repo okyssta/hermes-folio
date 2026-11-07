@@ -79,6 +79,23 @@ Highlights are real geometry: Folio reads the character boxes out of the PDF and
 scales them onto the rendered page, so the box lands on the sentence rather than
 near it.
 
+![the reader, with the match boxed on the page](docs/demo/page_marked.png)
+
+## Demo
+
+[`docs/demo/folio-demo.mp4`](docs/demo/folio-demo.mp4) — 62 seconds, silent.
+
+It is cut from a real session: index 68 documents, answer with the page, verify
+the quotation, catch a revision, refuse a fabricated quote. The full transcript
+is in [`docs/demo/transcript.md`](docs/demo/transcript.md), and the video's text
+is taken from it verbatim.
+
+```
+you   › where does the platform spec cap retries?
+hermes › Retries are capped at three attempts per request … (p. 1)
+         Quote verified EXACT at p. 1 (chars 97-216).
+```
+
 ## Revisions
 
 Every document is content-hashed. When a file changes, the old text is kept (up
@@ -164,7 +181,7 @@ or just ask: *"index my Documents folder and tell me what you can answer from it
 
 ```bash
 uv venv /tmp/fv --system-site-packages
-uv pip install --python /tmp/fv/bin/python pytest pytest-timeout fastapi httpx
+uv pip install --python /tmp/fv/bin/python pytest pytest-timeout pyyaml fastapi httpx pypdf pypdfium2 openpyxl pillow
 /tmp/fv/bin/python -m pytest -q          # 39 tests, no network
 hermes plugins validate . --install-deps  # the same checks catalog CI runs
 ```

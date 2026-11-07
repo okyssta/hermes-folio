@@ -236,11 +236,20 @@ def folio_open(args: dict[str, Any], **_: Any) -> str:
         return f"{row['title']} has no stored text (it may have been redacted to nothing)."
 
     body = _clip(text, max_chars)
+    head_version = ""
+    if len(versions) > 1:
+        position = next(
+            (index + 1 for index, row_ in enumerate(versions) if int(row_["id"]) == version_id),
+            len(versions),
+        )
+        head_version = f" · revision {position} of {len(versions)}"
+        if position < len(versions):
+            head_version += " (before the current one)"
     header = [
         f"{row['title']} · {row['kind']} · {locator or 'start'}",
         row["path"],
         f"captured {_when(captured['captured_at'] if captured else row['last_indexed'])}"
-        + (f" · revision {len(versions)} of {len(versions)}" if len(versions) > 1 else ""),
+        + head_version,
         "",
     ]
     citation = cite.format_citation(_as_dict(row), "plain", locator)

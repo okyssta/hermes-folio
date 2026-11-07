@@ -208,7 +208,7 @@ class Store:
             return row
         row = db.execute(
             "SELECT * FROM documents WHERE path LIKE ? ORDER BY length(path) LIMIT 1",
-            (f"%{ref}",),
+            (f"%{ref}%",),
         ).fetchone()
         if row is not None:
             return row

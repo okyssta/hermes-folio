@@ -66,8 +66,25 @@ function ResultRow({ item, active, onOpen }) {
 
 function Reader({ page, onClose }) {
   const doc = page.doc || {}
-  const rects = page.rects || []
   const [copied, setCopied] = useState(false)
+
+  // Geometry arrives as 0..1 fractions. Older backends sent PDF points; accept
+  // both so a pane and its backend can be upgraded independently.
+  const rects = useMemo(() => {
+    const raw = page.rects || []
+    const width = page.width || 1
+    const height = page.height || 1
+    return raw.map((rect) =>
+      rect.right <= 1.001 && rect.bottom <= 1.001
+        ? rect
+        : {
+            left: rect.left / width,
+            right: rect.right / width,
+            top: rect.top / height,
+            bottom: rect.bottom / height
+          }
+    )
+  }, [page.rects, page.width, page.height])
 
   const citation = useMemo(() => {
     const author = (doc.author || '').trim()
