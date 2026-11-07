@@ -116,7 +116,7 @@ revision before the current one.
 ## Install
 
 ```bash
-hermes plugins install folio        # from the catalog
+hermes plugins install okyssta/hermes-folio   # or `... folio` once listed
 hermes plugins enable folio
 ```
 

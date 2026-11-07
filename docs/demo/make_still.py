@@ -1,6 +1,7 @@
 """Render the demo still: a real PDF page with the match boxed, as the pane draws it."""
 import base64
 import io
+import os
 import sys
 import time
 
@@ -12,7 +13,7 @@ from folio.dashboard import plugin_api  # noqa: E402
 from folio.settings import Settings  # noqa: E402
 from folio.store import Store  # noqa: E402
 
-DB = "/tmp/foliohome/plugin-data/folio/folio.db"
+DB = os.environ.get("FOLIO_DB", "/tmp/foliohome/plugin-data/folio/folio.db")
 QUERY = sys.argv[1] if len(sys.argv) > 1 else "attempts"
 folio._CACHED = Settings(roots=["/root/folio-demo"], auto_scan_minutes=0)  # noqa: SLF001
 folio._CACHED_AT = time.monotonic() + 9999  # noqa: SLF001
