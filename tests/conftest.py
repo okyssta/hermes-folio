@@ -7,6 +7,7 @@ file. If a fixture ever stops parsing, the bug is in ten lines, not in a blob.
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 import zipfile
 from pathlib import Path
@@ -14,6 +15,21 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# The plugin's package name is ``folio``, but a clone of the repository is
+# usually called ``hermes-folio`` (not a valid module name). Load the package
+# from its own ``__init__.py`` under the name the imports expect, so the suite
+# runs identically from a clone, from ``~/.hermes/plugins/folio`` and from a
+# checkout renamed to match.
+if "folio" not in sys.modules:
+    spec = importlib.util.spec_from_file_location(
+        "folio", ROOT / "__init__.py", submodule_search_locations=[str(ROOT)]
+    )
+    if spec and spec.loader:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["folio"] = module
+        spec.loader.exec_module(module)
+
 if str(ROOT.parent) not in sys.path:
     sys.path.insert(0, str(ROOT.parent))
 

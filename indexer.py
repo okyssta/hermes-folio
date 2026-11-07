@@ -110,7 +110,7 @@ class Indexer:
         return out
 
     # ------------------------------------------------------------------ index
-    def index(self, paths: Iterable[str] | None = None) -> dict[str, Any]:
+    def index(self, paths: Iterable[str] | None = None, force: bool = False) -> dict[str, Any]:
         settings = self.settings_getter()
         if not settings.enabled:
             return {"ok": False, "error": "Folio is disabled in config (folio.enabled)."}
@@ -146,12 +146,12 @@ class Indexer:
                       "failed": 0, "removed": 0, "chars": 0}
             for target in targets:
                 if target.is_file():
-                    result = self._index_file(target, root="", settings=settings)
+                    result = self._index_file(target, root="", settings=settings, force=force)
                     totals[_bucket(result)] = totals.get(_bucket(result), 0) + 1
                     self.state.total = max(self.state.total, 1)
                     self.state.done += 1
                 else:
-                    self._scan_root(target, settings, totals)
+                    self._scan_root(target, settings, totals, force=force)
             self.state.finished_at = time.time()
             self.state.running = False
             totals["elapsed_s"] = round(self.state.finished_at - self.state.started_at, 2)
@@ -161,7 +161,8 @@ class Indexer:
             self.state.running = False
             self._lock.release()
 
-    def _scan_root(self, root: Path, settings: Settings, totals: dict[str, Any]) -> None:
+    def _scan_root(self, root: Path, settings: Settings, totals: dict[str, Any],
+                   force: bool = False) -> None:
         known = self.store.known_paths(str(root))
         seen: set[str] = set()
         files = list(_walk(root, settings))
@@ -170,7 +171,8 @@ class Indexer:
 
         for path in files:
             seen.add(str(path))
-            result = self._index_file(path, root=str(root), settings=settings, known=known)
+            result = self._index_file(path, root=str(root), settings=settings, known=known,
+                                      force=force)
             bucket = _bucket(result)
             totals[bucket] = totals.get(bucket, 0) + 1
             if bucket in {"indexed", "updated"}:
@@ -198,6 +200,7 @@ class Indexer:
         root: str,
         settings: Settings,
         known: dict[str, tuple[int, str, float, int]] | None = None,
+        force: bool = False,
     ) -> dict[str, Any]:
         started = time.perf_counter()
         try:
@@ -210,7 +213,7 @@ class Indexer:
             self.state.note_skip(reason)
             return {"status": "skipped", "path": str(path), "reason": reason}
 
-        if known is not None:
+        if known is not None and not force:
             prior = known.get(str(path))
             if prior and prior[3] == 0 and abs(prior[2] - stat.st_mtime) < 1e-6:
                 return {"status": "unchanged", "path": str(path)}
@@ -221,7 +224,13 @@ class Indexer:
             return {"status": "failed", "path": str(path), "error": str(exc)}
 
         existing = self.store.find_document(str(path))
-        if existing is not None and existing["sha256"] == digest and not existing["missing"]:
+        unchanged = (
+            existing is not None
+            and existing["sha256"] == digest
+            and not existing["missing"]
+        )
+
+        if unchanged and not force:
             self.store.upsert_document(
                 path=str(path), root=root or existing["root"], ext=path.suffix.lower(),
                 kind=existing["kind"], title=existing["title"], author=existing["author"],
@@ -235,6 +244,27 @@ class Indexer:
             extracted = extract(path, settings.max_text_chars)
         except Exception as exc:  # extract() already guards, this is belt and braces
             return {"status": "failed", "path": str(path), "error": str(exc)}
+
+        if unchanged and force:
+            # A forced scan re-reads the extractor's output for unchanged content:
+            # titles and page counts improve as the readers do, without touching
+            # the stored passages or creating a bogus revision.
+            if not extracted.segments:
+                return {"status": "unchanged", "path": str(path)}
+            self.store.update_metadata(
+                int(existing["id"]),
+                title=extracted.title,
+                author=extracted.author,
+                year=extracted.year,
+                kind=extracted.kind,
+                units_total=extracted.pages_total,
+                units_label=extracted.units_label,
+                chars=extracted.chars,
+                note=extracted.note,
+            )
+            return {"status": "updated", "path": str(path), "title": extracted.title,
+                    "kind": extracted.kind, "passages": 0, "chars": extracted.chars,
+                    "ms": 0.0, "version": "metadata"}
 
         if not extracted.segments:
             reason = extracted.note or "no extractable text"

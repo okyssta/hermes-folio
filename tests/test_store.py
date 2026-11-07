@@ -90,6 +90,17 @@ def test_unchanged_files_are_not_reread(library) -> None:
     assert result["updated"] == 0
 
 
+def test_forced_rescan_refreshes_metadata_without_a_new_revision(library) -> None:
+    store, indexer, _settings, corpus = library
+    before = store.find_document(str(corpus / "spec.pdf"))
+    result = indexer.index([str(corpus)], force=True)
+    assert result["unchanged"] == 0
+    assert result["updated"] == 7
+    after = store.find_document(str(corpus / "spec.pdf"))
+    assert int(after["version_count"]) == int(before["version_count"])
+    assert after["title"] == before["title"]
+
+
 def test_deleted_file_is_marked_missing_and_leaves_search(library) -> None:
     store, indexer, _settings, corpus = library
     (corpus / "notes.pdf").unlink()

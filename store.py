@@ -302,6 +302,16 @@ class Store:
     def mark_missing(self, doc_id: int) -> None:
         self.conn().execute("UPDATE documents SET missing=1 WHERE id=?", (doc_id,))
 
+    def update_metadata(self, doc_id: int, *, title: str, author: str, year: str,
+                        kind: str, units_total: int, units_label: str, chars: int,
+                        note: str) -> None:
+        """Refresh extracted metadata for unchanged content (a forced re-scan)."""
+        self.conn().execute(
+            """UPDATE documents SET title=?, author=?, year=?, kind=?, units_total=?,
+                   units_label=?, chars=?, note=? WHERE id=?""",
+            (title, author, year, kind, units_total, units_label, chars, note, doc_id),
+        )
+
     def known_paths(self, root: str) -> dict[str, tuple[int, str, float, int]]:
         rows = self.conn().execute(
             "SELECT id, path, sha256, mtime, size, missing FROM documents WHERE root=?", (root,)

@@ -56,7 +56,8 @@ def _status() -> str:
     lines = [
         f"Folio · {stats['documents']:,} documents · {stats['chunks']:,} passages · "
         f"{stats['chars'] / 1e6:.1f}M characters"
-        + (f" · {stats['versions']:,} revisions" if stats["versions"] else ""),
+        + (f" · {stats['versions'] - stats['documents']:,} older revisions"
+           if stats["versions"] > stats["documents"] else ""),
     ]
     if stats["kinds"]:
         kinds = ", ".join(f"{kind} {count}" for kind, count in list(stats["kinds"].items())[:6])

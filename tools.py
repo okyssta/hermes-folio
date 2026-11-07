@@ -408,7 +408,7 @@ def folio_index(args: dict[str, Any], **_: Any) -> str:
         return "Folio is still loading; try again in a moment."
 
     started = time.perf_counter()
-    result = indexer.index(paths or None)
+    result = indexer.index(paths or None, force=bool(args.get("force")))
     elapsed = time.perf_counter() - started
 
     if not result.get("ok"):

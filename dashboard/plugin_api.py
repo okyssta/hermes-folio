@@ -293,7 +293,7 @@ def index(body: dict[str, Any] | None = None) -> dict[str, Any]:
     indexer = _plugin().current_indexer()
     if indexer is None:
         return {"ok": False, "error": "indexer unavailable"}
-    result = indexer.index([str(p) for p in paths] or None)
+    result = indexer.index([str(p) for p in paths] or None, force=bool(body.get("force")))
     if isinstance(result, dict):
         result.pop("state", None)
     return {"ok": bool(result.get("ok", True)), **result}

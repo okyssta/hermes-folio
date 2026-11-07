@@ -643,7 +643,15 @@ def _title_from_text(out: Extracted, path: Path) -> None:
         score -= 3 if candidate.lower().startswith(labels) else 0
         score -= 2 if candidate.endswith((":", ".")) else 0
         score -= 2 if re.match(r"^(\d+[.)]|[ivx]+\.)\s", candidate, re.I) else 0
+        # Author lines carry affiliation superscripts ("Zhao1"), footnote marks,
+        # initials, or start with punctuation; a title almost never does.
+        score -= 3 if re.search(r"[A-Za-z]\d", candidate) else 0
+        score -= 3 if re.search(r"[*†‡]", candidate) else 0
+        score -= 3 if candidate.lstrip().startswith((",", ";", ":", "and ", "&", "-", "—")) else 0
+        score -= 3 if re.search(r"\b[A-Z]\.(\s|$)", candidate) else 0
+        score -= 6 if "@" in candidate else 0
         score -= position * 0.1
+
         if score > best_score:
             best_score, first_line = score, candidate
     if first_line and best_score >= 2:

@@ -16,8 +16,11 @@ def _manifest() -> dict:
     return yaml.safe_load((ROOT / "plugin.yaml").read_text(encoding="utf-8"))
 
 
-def test_name_matches_the_directory() -> None:
-    assert _manifest()["name"] == ROOT.name
+def test_name_matches_the_plugin_id() -> None:
+    # The folder a clone lands in is `hermes-folio`; Hermes keys the plugin off
+    # the manifest name, which must stay the catalog id.
+    assert _manifest()["name"] == "folio"
+    assert _manifest()["label"] == "Folio"
 
 
 def test_declared_tools_match_the_schemas() -> None:
