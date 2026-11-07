@@ -1,0 +1,110 @@
+name: folio
+label: Folio
+version: 1.0.0
+manifest_version: 2
+api_version: 1
+license: MIT
+homepage: https://github.com/okyssta/hermes-folio
+author: kyssta
+requires_hermes: ">=0.22.0"
+description: >
+  Hermes gets a library of the documents you own. Folio indexes a folder once —
+  PDF, DOCX, PPTX, XLSX, HTML, Markdown and source files — and answers from it
+  with the file, the page and the exact sentence, not a paraphrase. Seven tools
+  search the library, open a page, prove that a quote really appears where the
+  agent says it does, report what changed since a date, and format citations.
+  Every document is content-hashed, so a revised contract keeps its old text and
+  "what did this say in March" has an answer. Text stays in one local SQLite
+  index: no account, no API key, no embeddings, no network calls. Ask "where does
+  the spec say retries are capped at three?" and Hermes answers with p. 14 —
+  and can show you the sentence boxed on the page. Disclosure — reads the
+  documents inside folders the user adds and stores their extracted text (with
+  API keys, tokens, private-key blocks and card numbers redacted when `redact`
+  is on) in one SQLite file under the profile's plugin-data directory; a
+  background thread re-scans those folders on a timer; it makes no network
+  calls, reads no credential files, and never writes to the user's documents.
+tags: [documents, search, citations, pdf, research, local, privacy, evidence, library, provenance]
+
+provides_tools:
+  - folio_search
+  - folio_open
+  - folio_verify
+  - folio_changes
+  - folio_bibliography
+  - folio_index
+  - folio_forget
+
+provides_hooks: []
+
+# The readers are the host's: Folio ships no code of its own for PDF or XLSX.
+# Declared so a plugin environment that does not inherit core's optional extras
+# still gets a working reader, with the same bounds core already resolves.
+python_dependencies:
+  - "pypdf>=6.0,<8"
+  - "pypdfium2>=4.30,<6"
+  - "openpyxl>=3.1,<4"
+
+config_schema:
+  enabled:
+    type: bool
+    default: true
+    label: Enabled
+    description: Index documents and answer evidence queries
+  roots:
+    type: list
+    default: []
+    label: Library folders
+    description: >-
+      Folders Folio indexes. Empty means nothing is indexed until you add one with
+      folio_index or /folio add — the tool lists candidate folders first
+  include_extensions:
+    type: list
+    default: [".pdf", ".docx", ".pptx", ".xlsx", ".md", ".markdown", ".txt", ".rst", ".html", ".htm", ".csv", ".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".rs", ".java", ".c", ".h", ".cpp", ".rb", ".sh", ".sql", ".yaml", ".yml", ".json", ".toml"]
+    label: File types
+    description: Extensions indexed inside the library folders
+  exclude_dirs:
+    type: list
+    default: [".git", "node_modules", "venv", ".venv", "__pycache__", ".cache", "dist", "build", ".next", "target", "Library", ".Trash"]
+    label: Skipped folders
+    description: Directory names never descended into
+  max_file_mb:
+    type: float
+    default: 80
+    label: Largest file (MB)
+    description: Files above this are skipped and reported
+  max_text_chars:
+    type: int
+    default: 400000
+    label: Max characters per document
+    description: Text beyond this per document is dropped (20000-4000000)
+  chunk_chars:
+    type: int
+    default: 1200
+    label: Passage size (characters)
+    description: How much text one search result covers (400-4000)
+  keep_versions:
+    type: bool
+    default: true
+    label: Keep old versions
+    description: >-
+      Store each changed revision of a document so "what did this say in March"
+      can be answered. Off keeps only the current text
+  max_versions:
+    type: int
+    default: 20
+    label: Versions per document
+    description: Oldest revisions are dropped beyond this (1-200)
+  redact:
+    type: bool
+    default: true
+    label: Redact secrets
+    description: >-
+      Strip API keys, bearer tokens, private-key blocks and card numbers from
+      stored text before it is indexed
+  auto_scan_minutes:
+    type: int
+    default: 15
+    label: Refresh interval (minutes)
+    description: >-
+      How often the library is re-scanned for new and changed files. 0 disables
+      the background scan; queries still refresh first

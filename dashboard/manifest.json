@@ -1,0 +1,6 @@
+{
+  "name": "folio",
+  "label": "Folio",
+  "api": "plugin_api.py",
+  "title": "Folio — your document library, with citations"
+}
